@@ -17,21 +17,20 @@
       <v-card-text class="pa-6">
         <v-form ref="formRef" @submit.prevent="save">
           <!-- ID Field -->
-          <div class="mb-5">
-            <label class="text-body-2 font-weight-medium mb-2 d-block">
-              ID <span class="text-error">*</span>
-            </label>
-            <v-text-field
-              v-model="form.id"
-              placeholder="VD: vn_26_01"
-              :rules="[rules.required]"
-              :disabled="isEdit"
-              hide-details="auto"
-            />
-            <p v-if="!isEdit" class="text-caption text-secondary mt-1">
-              ID duy nhất, không thể thay đổi sau khi tạo
-            </p>
-          </div>
+        <div v-if="isEdit" class="mb-5">
+          <label class="text-body-2 font-weight-medium mb-2 d-block">
+            ID
+          </label>
+          <v-text-field
+            v-model="form.id"
+            :disabled="true"
+            :rules="isEdit ? [rules.required] : []"
+            hide-details="auto"
+          />
+          <p class="text-caption text-secondary mt-1">
+            ID duy nhất, không thể thay đổi sau khi tạo
+          </p>
+        </div>
 
           <!-- Name Field -->
           <div class="mb-5">
@@ -51,11 +50,11 @@
             <label class="text-body-2 font-weight-medium mb-2 d-block">
               Mô tả (hỗ trợ HTML)
             </label>
-            <Editor
-              v-if="dialog"
-              v-model="form.description"
-              :init="editorInit"
-              :tinymceScriptSrc="'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js'"
+            <QuillEditor
+              v-model:content="form.description" contentType="html" theme="snow"
+              :options="quillOptions"
+              style="height: 300px;"
+              :key="dialog"
             />
           </div>
 
@@ -126,7 +125,6 @@
             <!-- Upload Input -->
             <v-file-input
               v-if="totalImages < 3"
-              v-model="newImages"
               accept="image/*"
               :label="`Thêm ảnh (còn ${3 - totalImages} slot)`"
               prepend-icon=""
@@ -135,6 +133,7 @@
               multiple
               @update:model-value="handleNewImages"
             />
+
 
             <v-alert
               v-else
@@ -169,7 +168,9 @@
 import { ref, computed, watch } from 'vue'
 import { uploadImage, type WoodPiece } from '@/api'
 import type { VForm } from 'vuetify/components'
-import Editor  from '@tinymce/tinymce-vue'
+
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const props = defineProps<{
   modelValue: boolean
@@ -178,22 +179,18 @@ const props = defineProps<{
   isEdit: boolean
 }>()
 
-const editorInit = {
-  height: 300,
-  menubar: true,
-  plugins: [
-    'advlist autolink lists link image charmap print preview anchor',
-    'searchreplace visualblocks code fullscreen',
-    'insertdatetime media table paste code help wordcount'
-  ],
-  toolbar:
-    'undo redo | formatselect | bold italic backcolor | \
-    alignleft aligncenter alignright alignjustify | \
-    bullist numlist outdent indent | removeformat | help',
-  inline: false,
-  auto_focus: true,
+const quillOptions = {
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ header: 1 }, { header: 2 }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ align: [] }],
+            ['link', 'image', 'code-block'],
+            ['clean']
+        ]
+    }
 }
-
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -247,16 +244,20 @@ watch(() => props.modelValue, (val) => {
 })
 
 function handleNewImages(files: File[]) {
-  if (!files) return
+  if (!files || files.length === 0) return;
 
-  newImagePreviews.value.forEach(url => URL.revokeObjectURL(url))
-  newImagePreviews.value = []
+  const available = 3 - (currentImages.value.length + newImages.value.length);
 
-  const available = 3 - currentImages.value.length
-  const toAdd = files.slice(0, available)
+  if (available <= 0) return;
 
-  newImages.value = toAdd
-  newImagePreviews.value = toAdd.map(f => URL.createObjectURL(f))
+  const toAdd = Array.from(files).slice(0, available);
+
+  newImages.value.push(...toAdd);
+
+  toAdd.forEach(file => {
+    const url = URL.createObjectURL(file);
+    newImagePreviews.value.push(url);
+  });
 }
 
 function removeCurrentImage(index: number) {
@@ -287,11 +288,11 @@ async function save() {
     const allImages = [...currentImages.value, ...uploadedUrls]
 
     const data: WoodPiece = {
-      id: form.value.id,
       database_id: props.databaseId,
       name: form.value.name,
       description: form.value.description,
-      image_urls: allImages
+      image_urls: allImages,
+      ...(props.isEdit && { id: form.value.id })
     }
 
     emit('save', data)

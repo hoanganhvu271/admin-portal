@@ -155,7 +155,8 @@ const isEdit = computed(() => !!props.collection)
 
 const formRef = ref<VForm | null>(null)
 const saving = ref(false)
-const imageFile = ref<File[]>([])
+
+const imageFile = ref<File | null>(null)
 const previewUrl = ref<string | null>(null)
 
 const form = ref<WoodDatabase>({
@@ -174,6 +175,7 @@ watch(() => props.modelValue, (val) => {
   if (val) {
     if (props.collection) {
       form.value = { ...props.collection }
+      previewUrl.value = props.collection.image || null
     } else {
       form.value = {
         id: '',
@@ -182,18 +184,32 @@ watch(() => props.modelValue, (val) => {
         description: '',
         image: ''
       }
+      previewUrl.value = null
     }
-    imageFile.value = []
-    previewUrl.value = null
+
+    imageFile.value = null
   }
 })
 
-function handleImageChange(files: File[]) {
-  if (files && files.length > 0) {
-    previewUrl.value = URL.createObjectURL(files[0])
+function handleImageChange(value: any) {
+  let file: File | null = null
+
+  if (value instanceof File) {
+    file = value
+  } else if (Array.isArray(value) && value.length > 0) {
+    file = value[0]
   } else {
     previewUrl.value = null
+    imageFile.value = null
+    return
   }
+
+  imageFile.value = file
+
+  // Clear old preview
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+
+  previewUrl.value = URL.createObjectURL(file)
 }
 
 async function save() {
@@ -203,11 +219,9 @@ async function save() {
   if (!valid) return
 
   saving.value = true
-
   try {
-    // Upload image if selected
-    if (imageFile.value && imageFile.value.length > 0) {
-      const url = await uploadImage(imageFile.value[0])
+    if (imageFile.value) {
+      const url = await uploadImage(imageFile.value)
       form.value.image = url
     }
 
@@ -223,19 +237,3 @@ function close() {
   dialog.value = false
 }
 </script>
-
-<style scoped>
-.image-upload-preview {
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-}
-
-.empty-preview {
-  width: 120px;
-  height: 120px;
-  background: #F5F5F5;
-  border: 2px dashed #E0E0E0;
-  border-radius: 12px;
-}
-</style>
