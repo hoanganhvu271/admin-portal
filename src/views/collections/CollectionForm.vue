@@ -1,235 +1,241 @@
 <template>
-  <v-dialog v-model="internalDialog" max-width="750">
+  <v-dialog v-model="dialog" max-width="600" persistent>
     <v-card>
-      <v-card-title class="d-flex align-center bg-primary text-white pa-4">
-        <v-icon class="mr-3">mdi-hammer-wrench</v-icon>
-        <span class="text-h6">
-          {{ isEdit ? 'Sửa Wood Piece' : 'Thêm Wood Piece' }}
+      <!-- Header -->
+      <v-card-title class="d-flex align-center justify-space-between pa-6 pb-4">
+        <span class="text-h6 font-weight-bold">
+          {{ isEdit ? 'Chỉnh sửa Collection' : 'Tạo Collection mới' }}
         </span>
+        <v-btn icon variant="text" size="small" @click="close">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
       </v-card-title>
 
-      <v-card-text class="pt-6">
-        <v-form ref="formRef" lazy-validation>
-          <v-text-field
-            v-model="form.name"
-            label="Tên mẫu gỗ (Name)"
-            required
-            :rules="[v => !!v || 'Tên không được để trống']"
-            variant="outlined"
-            density="compact"
-            class="mb-4"
-            prepend-inner-icon="mdi-format-title"
-          />
+      <v-divider />
 
-          <v-textarea
-            v-model="form.description"
-            label="Mô tả (Description - Hỗ trợ HTML)"
-            rows="4"
-            variant="outlined"
-            density="compact"
-            class="mb-4"
-            prepend-inner-icon="mdi-text-box-outline"
-          />
-
-          <v-card class="pa-4 mb-6" variant="outlined">
-            <div class="text-subtitle-1 mb-2 font-weight-bold">
-              <v-icon class="mr-2">mdi-image-multiple</v-icon> Hình ảnh (Tối đa 3)
-            </div>
-
-            <v-alert
-              type="info"
-              density="compact"
-              variant="tonal"
-              class="mb-4"
-              icon="mdi-information-outline"
-            >
-              Bạn có thể tải lên tối đa **3 ảnh** mới hoặc giữ lại các ảnh đã có.
-            </v-alert>
-
-            <v-file-input
-              v-model="form.newImages"
-              multiple
-              accept="image/*"
-              label="Chọn ảnh mới"
-              clearable
-              variant="outlined"
-              density="compact"
-              :rules="[maxImagesRule]"
-              class="mb-4"
+      <!-- Form -->
+      <v-card-text class="pa-6">
+        <v-form ref="formRef" @submit.prevent="save">
+          <!-- ID Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              ID <span class="text-error">*</span>
+            </label>
+            <v-text-field
+              v-model="form.id"
+              placeholder="VD: vn_26"
+              :rules="[rules.required]"
+              :disabled="isEdit"
+              hide-details="auto"
             />
+            <p class="text-caption text-secondary mt-1">
+              ID duy nhất, không thể thay đổi sau khi tạo
+            </p>
+          </div>
 
-            <v-row v-if="previewList.length">
-              <v-col
-                v-for="(url, idx) in previewList"
-                :key="idx"
-                cols="12"
-                sm="4"
-              >
-                <v-card class="pa-2" elevation="2">
-                  <v-img :src="url" height="100" cover class="rounded" />
-                  <v-btn
-                    size="small"
-                    color="error"
-                    variant="flat"
-                    class="mt-2 w-100"
-                    @click="removePreview(idx)"
-                  >
-                    <v-icon left>mdi-delete</v-icon> Xóa
-                  </v-btn>
-                </v-card>
-              </v-col>
-            </v-row>
-            <v-card-text
-              v-else
-              class="text-center text-medium-emphasis"
-              style="font-style: italic"
-            >
-              Chưa có hình ảnh nào được chọn.
-            </v-card-text>
-          </v-card>
+          <!-- Title Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Tên Collection <span class="text-error">*</span>
+            </label>
+            <v-text-field
+              v-model="form.title"
+              placeholder="VD: Gỗ Việt Nam"
+              :rules="[rules.required]"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Size Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Số lượng mẫu
+            </label>
+            <v-text-field
+              v-model.number="form.size"
+              type="number"
+              placeholder="0"
+              min="0"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Description Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Mô tả
+            </label>
+            <v-textarea
+              v-model="form.description"
+              placeholder="Mô tả ngắn về bộ sưu tập..."
+              rows="3"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Image Upload -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Ảnh đại diện
+            </label>
+
+            <div class="d-flex align-start ga-4">
+              <!-- Preview -->
+              <div class="image-upload-preview">
+                <v-img
+                  v-if="form.image || previewUrl"
+                  :src="previewUrl || form.image"
+                  width="120"
+                  height="120"
+                  cover
+                  class="rounded-lg"
+                />
+                <div v-else class="empty-preview d-flex align-center justify-center">
+                  <v-icon size="32" color="secondary">mdi-image-outline</v-icon>
+                </div>
+              </div>
+
+              <!-- Upload Input -->
+              <div class="flex-grow-1">
+                <v-file-input
+                  v-model="imageFile"
+                  accept="image/*"
+                  label="Chọn ảnh"
+                  prepend-icon=""
+                  prepend-inner-icon="mdi-upload"
+                  hide-details="auto"
+                  @update:model-value="handleImageChange"
+                />
+                <p class="text-caption text-secondary mt-2">
+                  Hỗ trợ: JPG, PNG, GIF. Tối đa 5MB
+                </p>
+              </div>
+            </div>
+          </div>
         </v-form>
       </v-card-text>
 
       <v-divider />
-      <v-card-actions class="pa-4">
+
+      <!-- Actions -->
+      <v-card-actions class="pa-6 pt-4">
         <v-spacer />
-        <v-btn
-          variant="tonal"
-          color="grey-darken-1"
-          @click="close"
-          prepend-icon="mdi-close"
-        >
+        <v-btn variant="text" color="secondary" @click="close">
           Hủy
         </v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          @click="validateAndSave"
-          :loading="loading"
-          prepend-icon="mdi-content-save"
-        >
-          Lưu
+        <v-btn color="primary" :loading="saving" @click="save">
+          {{ isEdit ? 'Cập nhật' : 'Tạo mới' }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch, computed } from 'vue'
-import type { WoodPiece } from '@/models/wood'
-import { VForm } from 'vuetify/components'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { uploadImage, type WoodDatabase } from '@/api'
+import type { VForm } from 'vuetify/components'
 
-export default defineComponent({
-  props: {
-    modelValue: Boolean,
-    item: Object as () => WoodPiece | null,
-    databaseId: String,
-  },
-  emits: ['update:modelValue', 'save'],
+const props = defineProps<{
+  modelValue: boolean
+  collection: WoodDatabase | null
+}>()
 
-  setup(props, { emit }) {
-    const internalDialog = ref(props.modelValue)
-    const formRef = ref<VForm | null>(null) // Dùng để validate form
-    const loading = ref(false) // Thêm trạng thái loading cho button
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  'save': [data: WoodDatabase]
+}>()
 
-    const form = ref({
-      id: '',
-      name: '',
-      description: '',
-      image_urls: [] as string[],
-      newImages: [] as File[],
-    })
-
-    const previewList = ref<string[]>([])
-
-    // ... (watch logic giữ nguyên) ...
-    watch(
-      () => props.modelValue,
-      (v) => {
-        internalDialog.value = v
-
-        if (v && props.item) {
-          form.value = {
-            id: props.item.id,
-            name: props.item.name,
-            description: props.item.description,
-            image_urls: [...props.item.image_urls],
-            newImages: [],
-          }
-
-          previewList.value = [...props.item.image_urls]
-        } else if (v) {
-          form.value = {
-            id: '',
-            name: '',
-            description: '',
-            image_urls: [],
-            newImages: [],
-          }
-          previewList.value = []
-        }
-      }
-    )
-
-    watch(internalDialog, (v) => emit('update:modelValue', v))
-
-    const maxImagesRule = (files: File[]) => {
-      const existingCount = previewList.value.length
-      const newCount = files?.length ?? 0
-      return (existingCount + newCount) <= 3 || `Tổng cộng tối đa 3 ảnh. Hiện có ${existingCount} ảnh, không thể thêm ${newCount} ảnh.`
-    }
-
-    const isEdit = computed(() => !!props.item)
-
-    const removePreview = (index: number) => {
-      // Xóa cả trong list ảnh cũ và list preview
-      if (index < form.value.image_urls.length) {
-        form.value.image_urls.splice(index, 1) // Xóa khỏi list ảnh đã có
-      }
-      previewList.value.splice(index, 1) // Xóa khỏi list preview
-    }
-
-    const save = () => {
-      emit('save', {
-        id: form.value.id,
-        name: form.value.name,
-        description: form.value.description,
-        database_id: props.databaseId,
-        image_urls: previewList.value.filter(url => !url.startsWith('blob:')), // Lọc bỏ blob URL của ảnh mới
-        new_files: form.value.newImages,
-      })
-      internalDialog.value = false
-      loading.value = false
-    }
-
-    const validateAndSave = async () => {
-      if (formRef.value) {
-        const { valid } = await formRef.value.validate()
-        if (valid) {
-          loading.value = true
-          // Giả định logic save (bao gồm upload)
-          // ...
-          save()
-        }
-      }
-    }
-
-    return {
-      internalDialog,
-      form,
-      previewList,
-      maxImagesRule,
-      isEdit,
-      save,
-      removePreview,
-      formRef,
-      loading,
-      validateAndSave,
-      close() {
-        internalDialog.value = false
-      },
-    }
-  },
+const dialog = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
 })
+
+const isEdit = computed(() => !!props.collection)
+
+const formRef = ref<VForm | null>(null)
+const saving = ref(false)
+const imageFile = ref<File[]>([])
+const previewUrl = ref<string | null>(null)
+
+const form = ref<WoodDatabase>({
+  id: '',
+  title: '',
+  size: 0,
+  description: '',
+  image: ''
+})
+
+const rules = {
+  required: (v: string) => !!v || 'Trường này là bắt buộc'
+}
+
+watch(() => props.modelValue, (val) => {
+  if (val) {
+    if (props.collection) {
+      form.value = { ...props.collection }
+    } else {
+      form.value = {
+        id: '',
+        title: '',
+        size: 0,
+        description: '',
+        image: ''
+      }
+    }
+    imageFile.value = []
+    previewUrl.value = null
+  }
+})
+
+function handleImageChange(files: File[]) {
+  if (files && files.length > 0) {
+    previewUrl.value = URL.createObjectURL(files[0])
+  } else {
+    previewUrl.value = null
+  }
+}
+
+async function save() {
+  if (!formRef.value) return
+
+  const { valid } = await formRef.value.validate()
+  if (!valid) return
+
+  saving.value = true
+
+  try {
+    // Upload image if selected
+    if (imageFile.value && imageFile.value.length > 0) {
+      const url = await uploadImage(imageFile.value[0])
+      form.value.image = url
+    }
+
+    emit('save', { ...form.value })
+  } catch (error) {
+    console.error('Error saving:', error)
+  } finally {
+    saving.value = false
+  }
+}
+
+function close() {
+  dialog.value = false
+}
 </script>
+
+<style scoped>
+.image-upload-preview {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.empty-preview {
+  width: 120px;
+  height: 120px;
+  background: #F5F5F5;
+  border: 2px dashed #E0E0E0;
+  border-radius: 12px;
+}
+</style>

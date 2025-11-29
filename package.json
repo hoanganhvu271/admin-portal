@@ -1,7 +1,7 @@
 {
   "name": "wood_admin_portal",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,6 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
-    "sass": "^1.94.2",
     "vue": "^3.5.24",
     "vue-router": "^4.6.3",
     "vuetify": "^3.11.0-beta.1"
@@ -20,6 +19,7 @@
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
+    "sass": "^1.94.2",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vue-tsc": "^3.1.4"

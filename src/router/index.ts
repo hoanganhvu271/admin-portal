@@ -5,13 +5,14 @@ export default createRouter({
   routes: [
     {
       path: '/',
-      name: 'WoodCollection',
-      component: () => import('../views/collections/WoodCollections.vue'),
+      name: 'Collections',
+      component: () => import('../views/collections/CollectionList.vue'),
     },
     {
-      path: '/wood_piece',
-      name: 'WoodPiece',
-      component: () => import('../views/pieces/WoodPieces.vue'),
+      path: '/collection/:id/pieces',
+      name: 'Pieces',
+      component: () => import('../views/pieces/PieceList.vue'),
+      props: true
     },
   ]
 })

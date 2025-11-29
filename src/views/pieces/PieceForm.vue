@@ -1,235 +1,302 @@
 <template>
-  <v-dialog v-model="internalDialog" max-width="750">
+  <v-dialog v-model="dialog" max-width="700" persistent>
     <v-card>
-      <v-card-title class="d-flex align-center bg-primary text-white pa-4">
-        <v-icon class="mr-3">mdi-hammer-wrench</v-icon>
-        <span class="text-h6">
-          {{ isEdit ? 'Sửa Wood Piece' : 'Thêm Wood Piece' }}
+      <!-- Header -->
+      <v-card-title class="d-flex align-center justify-space-between pa-6 pb-4">
+        <span class="text-h6 font-weight-bold">
+          {{ isEdit ? 'Chỉnh sửa mẫu gỗ' : 'Thêm mẫu gỗ mới' }}
         </span>
+        <v-btn icon variant="text" size="small" @click="close">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
       </v-card-title>
 
-      <v-card-text class="pt-6">
-        <v-form ref="formRef" lazy-validation>
-          <v-text-field
-            v-model="form.name"
-            label="Tên mẫu gỗ (Name)"
-            required
-            :rules="[v => !!v || 'Tên không được để trống']"
-            variant="outlined"
-            density="compact"
-            class="mb-4"
-            prepend-inner-icon="mdi-format-title"
-          />
+      <v-divider />
 
-          <v-textarea
-            v-model="form.description"
-            label="Mô tả (Description - Hỗ trợ HTML)"
-            rows="4"
-            variant="outlined"
-            density="compact"
-            class="mb-4"
-            prepend-inner-icon="mdi-text-box-outline"
-          />
+      <!-- Form -->
+      <v-card-text class="pa-6">
+        <v-form ref="formRef" @submit.prevent="save">
+          <!-- ID Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              ID <span class="text-error">*</span>
+            </label>
+            <v-text-field
+              v-model="form.id"
+              placeholder="VD: vn_26_01"
+              :rules="[rules.required]"
+              :disabled="isEdit"
+              hide-details="auto"
+            />
+            <p v-if="!isEdit" class="text-caption text-secondary mt-1">
+              ID duy nhất, không thể thay đổi sau khi tạo
+            </p>
+          </div>
 
-          <v-card class="pa-4 mb-6" variant="outlined">
-            <div class="text-subtitle-1 mb-2 font-weight-bold">
-              <v-icon class="mr-2">mdi-image-multiple</v-icon> Hình ảnh (Tối đa 3)
+          <!-- Name Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Tên mẫu gỗ <span class="text-error">*</span>
+            </label>
+            <v-text-field
+              v-model="form.name"
+              placeholder="VD: Gỗ Sưa"
+              :rules="[rules.required]"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Description Field -->
+          <div class="mb-5">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">
+              Mô tả (hỗ trợ HTML)
+            </label>
+            <v-textarea
+              v-model="form.description"
+              placeholder="Mô tả chi tiết về loại gỗ..."
+              rows="4"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Images Section -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-3 d-block">
+              Hình ảnh (tối đa 3 ảnh)
+            </label>
+
+            <!-- Current Images -->
+            <div v-if="currentImages.length > 0" class="mb-4">
+              <p class="text-caption text-secondary mb-2">Ảnh hiện tại:</p>
+              <div class="d-flex flex-wrap ga-3">
+                <div
+                  v-for="(url, idx) in currentImages"
+                  :key="idx"
+                  class="image-item"
+                >
+                  <v-img
+                    :src="url"
+                    width="100"
+                    height="100"
+                    cover
+                    class="rounded-lg"
+                  />
+                  <v-btn
+                    icon
+                    size="x-small"
+                    color="error"
+                    class="remove-btn"
+                    @click="removeCurrentImage(idx)"
+                  >
+                    <v-icon size="14">mdi-close</v-icon>
+                  </v-btn>
+                </div>
+              </div>
             </div>
 
-            <v-alert
-              type="info"
-              density="compact"
-              variant="tonal"
-              class="mb-4"
-              icon="mdi-information-outline"
-            >
-              Bạn có thể tải lên tối đa **3 ảnh** mới hoặc giữ lại các ảnh đã có.
-            </v-alert>
+            <!-- New Images Preview -->
+            <div v-if="newImagePreviews.length > 0" class="mb-4">
+              <p class="text-caption text-secondary mb-2">Ảnh mới:</p>
+              <div class="d-flex flex-wrap ga-3">
+                <div
+                  v-for="(url, idx) in newImagePreviews"
+                  :key="idx"
+                  class="image-item"
+                >
+                  <v-img
+                    :src="url"
+                    width="100"
+                    height="100"
+                    cover
+                    class="rounded-lg"
+                  />
+                  <v-btn
+                    icon
+                    size="x-small"
+                    color="error"
+                    class="remove-btn"
+                    @click="removeNewImage(idx)"
+                  >
+                    <v-icon size="14">mdi-close</v-icon>
+                  </v-btn>
+                </div>
+              </div>
+            </div>
 
+            <!-- Upload Input -->
             <v-file-input
-              v-model="form.newImages"
-              multiple
+              v-if="totalImages < 3"
+              v-model="newImages"
               accept="image/*"
-              label="Chọn ảnh mới"
-              clearable
-              variant="outlined"
-              density="compact"
-              :rules="[maxImagesRule]"
-              class="mb-4"
+              :label="`Thêm ảnh (còn ${3 - totalImages} slot)`"
+              prepend-icon=""
+              prepend-inner-icon="mdi-upload"
+              hide-details="auto"
+              multiple
+              @update:model-value="handleNewImages"
             />
 
-            <v-row v-if="previewList.length">
-              <v-col
-                v-for="(url, idx) in previewList"
-                :key="idx"
-                cols="12"
-                sm="4"
-              >
-                <v-card class="pa-2" elevation="2">
-                  <v-img :src="url" height="100" cover class="rounded" />
-                  <v-btn
-                    size="small"
-                    color="error"
-                    variant="flat"
-                    class="mt-2 w-100"
-                    @click="removePreview(idx)"
-                  >
-                    <v-icon left>mdi-delete</v-icon> Xóa
-                  </v-btn>
-                </v-card>
-              </v-col>
-            </v-row>
-            <v-card-text
+            <v-alert
               v-else
-              class="text-center text-medium-emphasis"
-              style="font-style: italic"
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mt-2"
             >
-              Chưa có hình ảnh nào được chọn.
-            </v-card-text>
-          </v-card>
+              Đã đạt giới hạn 3 ảnh
+            </v-alert>
+          </div>
         </v-form>
       </v-card-text>
 
       <v-divider />
-      <v-card-actions class="pa-4">
+
+      <!-- Actions -->
+      <v-card-actions class="pa-6 pt-4">
         <v-spacer />
-        <v-btn
-          variant="tonal"
-          color="grey-darken-1"
-          @click="close"
-          prepend-icon="mdi-close"
-        >
+        <v-btn variant="text" color="secondary" @click="close">
           Hủy
         </v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          @click="validateAndSave"
-          :loading="loading"
-          prepend-icon="mdi-content-save"
-        >
-          Lưu
+        <v-btn color="primary" :loading="saving" @click="save">
+          {{ isEdit ? 'Cập nhật' : 'Tạo mới' }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch, computed } from 'vue'
-import type { WoodPiece } from '@/models/wood'
-import { VForm } from 'vuetify/components'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { uploadImage, type WoodPiece } from '@/api'
+import type { VForm } from 'vuetify/components'
 
-export default defineComponent({
-  props: {
-    modelValue: Boolean,
-    item: Object as () => WoodPiece | null,
-    databaseId: String,
-  },
-  emits: ['update:modelValue', 'save'],
+const props = defineProps<{
+  modelValue: boolean
+  piece: WoodPiece | null
+  databaseId: string
+  isEdit: boolean
+}>()
 
-  setup(props, { emit }) {
-    const internalDialog = ref(props.modelValue)
-    const formRef = ref<VForm | null>(null) // Dùng để validate form
-    const loading = ref(false) // Thêm trạng thái loading cho button
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  'save': [data: WoodPiece]
+}>()
 
-    const form = ref({
-      id: '',
-      name: '',
-      description: '',
-      image_urls: [] as string[],
-      newImages: [] as File[],
-    })
-
-    const previewList = ref<string[]>([])
-
-    // ... (watch logic giữ nguyên) ...
-    watch(
-      () => props.modelValue,
-      (v) => {
-        internalDialog.value = v
-
-        if (v && props.item) {
-          form.value = {
-            id: props.item.id,
-            name: props.item.name,
-            description: props.item.description,
-            image_urls: [...props.item.image_urls],
-            newImages: [],
-          }
-
-          previewList.value = [...props.item.image_urls]
-        } else if (v) {
-          form.value = {
-            id: '',
-            name: '',
-            description: '',
-            image_urls: [],
-            newImages: [],
-          }
-          previewList.value = []
-        }
-      }
-    )
-
-    watch(internalDialog, (v) => emit('update:modelValue', v))
-
-    const maxImagesRule = (files: File[]) => {
-      const existingCount = previewList.value.length
-      const newCount = files?.length ?? 0
-      return (existingCount + newCount) <= 3 || `Tổng cộng tối đa 3 ảnh. Hiện có ${existingCount} ảnh, không thể thêm ${newCount} ảnh.`
-    }
-
-    const isEdit = computed(() => !!props.item)
-
-    const removePreview = (index: number) => {
-      // Xóa cả trong list ảnh cũ và list preview
-      if (index < form.value.image_urls.length) {
-        form.value.image_urls.splice(index, 1) // Xóa khỏi list ảnh đã có
-      }
-      previewList.value.splice(index, 1) // Xóa khỏi list preview
-    }
-
-    const save = () => {
-      emit('save', {
-        id: form.value.id,
-        name: form.value.name,
-        description: form.value.description,
-        database_id: props.databaseId,
-        image_urls: previewList.value.filter(url => !url.startsWith('blob:')), // Lọc bỏ blob URL của ảnh mới
-        new_files: form.value.newImages,
-      })
-      internalDialog.value = false
-      loading.value = false
-    }
-
-    const validateAndSave = async () => {
-      if (formRef.value) {
-        const { valid } = await formRef.value.validate()
-        if (valid) {
-          loading.value = true
-          // Giả định logic save (bao gồm upload)
-          // ...
-          save()
-        }
-      }
-    }
-
-    return {
-      internalDialog,
-      form,
-      previewList,
-      maxImagesRule,
-      isEdit,
-      save,
-      removePreview,
-      formRef,
-      loading,
-      validateAndSave,
-      close() {
-        internalDialog.value = false
-      },
-    }
-  },
+const dialog = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
 })
+
+const formRef = ref<VForm | null>(null)
+const saving = ref(false)
+
+const form = ref({
+  id: '',
+  name: '',
+  description: ''
+})
+
+const currentImages = ref<string[]>([])
+const newImages = ref<File[]>([])
+const newImagePreviews = ref<string[]>([])
+
+const totalImages = computed(() => currentImages.value.length + newImagePreviews.value.length)
+
+const rules = {
+  required: (v: string) => !!v || 'Trường này là bắt buộc'
+}
+
+watch(() => props.modelValue, (val) => {
+  if (val) {
+    if (props.piece) {
+      form.value = {
+        id: props.piece.id,
+        name: props.piece.name,
+        description: props.piece.description || ''
+      }
+      currentImages.value = [...(props.piece.image_urls || [])]
+    } else {
+      form.value = {
+        id: '',
+        name: '',
+        description: ''
+      }
+      currentImages.value = []
+    }
+    newImages.value = []
+    newImagePreviews.value = []
+  }
+})
+
+function handleNewImages(files: File[]) {
+  if (!files) return
+
+  newImagePreviews.value.forEach(url => URL.revokeObjectURL(url))
+  newImagePreviews.value = []
+
+  const available = 3 - currentImages.value.length
+  const toAdd = files.slice(0, available)
+
+  newImages.value = toAdd
+  newImagePreviews.value = toAdd.map(f => URL.createObjectURL(f))
+}
+
+function removeCurrentImage(index: number) {
+  currentImages.value.splice(index, 1)
+}
+
+function removeNewImage(index: number) {
+  URL.revokeObjectURL(newImagePreviews.value[index])
+  newImages.value.splice(index, 1)
+  newImagePreviews.value.splice(index, 1)
+}
+
+async function save() {
+  if (!formRef.value) return
+
+  const { valid } = await formRef.value.validate()
+  if (!valid) return
+
+  saving.value = true
+
+  try {
+    const uploadedUrls: string[] = []
+    for (const file of newImages.value) {
+      const url = await uploadImage(file)
+      uploadedUrls.push(url)
+    }
+
+    const allImages = [...currentImages.value, ...uploadedUrls]
+
+    const data: WoodPiece = {
+      id: form.value.id,
+      database_id: props.databaseId,
+      name: form.value.name,
+      description: form.value.description,
+      image_urls: allImages
+    }
+
+    emit('save', data)
+  } catch (error) {
+    console.error('Error saving:', error)
+  } finally {
+    saving.value = false
+  }
+}
+
+function close() {
+  dialog.value = false
+}
 </script>
+
+<style scoped>
+.image-item {
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+</style>
