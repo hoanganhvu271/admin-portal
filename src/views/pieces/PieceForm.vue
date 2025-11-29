@@ -51,11 +51,11 @@
             <label class="text-body-2 font-weight-medium mb-2 d-block">
               Mô tả (hỗ trợ HTML)
             </label>
-            <v-textarea
+            <Editor
+              v-if="dialog"
               v-model="form.description"
-              placeholder="Mô tả chi tiết về loại gỗ..."
-              rows="4"
-              hide-details="auto"
+              :init="editorInit"
+              :tinymceScriptSrc="'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js'"
             />
           </div>
 
@@ -169,6 +169,7 @@
 import { ref, computed, watch } from 'vue'
 import { uploadImage, type WoodPiece } from '@/api'
 import type { VForm } from 'vuetify/components'
+import Editor  from '@tinymce/tinymce-vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -176,6 +177,23 @@ const props = defineProps<{
   databaseId: string
   isEdit: boolean
 }>()
+
+const editorInit = {
+  height: 300,
+  menubar: true,
+  plugins: [
+    'advlist autolink lists link image charmap print preview anchor',
+    'searchreplace visualblocks code fullscreen',
+    'insertdatetime media table paste code help wordcount'
+  ],
+  toolbar:
+    'undo redo | formatselect | bold italic backcolor | \
+    alignleft aligncenter alignright alignjustify | \
+    bullist numlist outdent indent | removeformat | help',
+  inline: false,
+  auto_focus: true,
+}
+
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
