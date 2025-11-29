@@ -126,6 +126,7 @@ export async function getPiece(id: string): Promise<WoodPiece> {
 
 // Create new piece
 export async function createPiece(data: WoodPiece): Promise<WoodPiece> {
+    console.log(data)
   const res = await fetch(`${API_BASE}/library-api/piece/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -133,6 +134,7 @@ export async function createPiece(data: WoodPiece): Promise<WoodPiece> {
   })
   if (!res.ok) {
     const error = await res.json()
+    console.log(error)
     throw new Error(error.error || 'Failed to create piece')
   }
   const result = await res.json()
@@ -141,6 +143,7 @@ export async function createPiece(data: WoodPiece): Promise<WoodPiece> {
 
 // Update piece
 export async function updatePiece(id: string, data: WoodPiece): Promise<WoodPiece> {
+    console.log(data)
   const res = await fetch(`${API_BASE}/library-api/piece/update/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -148,6 +151,7 @@ export async function updatePiece(id: string, data: WoodPiece): Promise<WoodPiec
   })
   if (!res.ok) {
     const error = await res.json()
+    console.error(error)
     throw new Error(error.error || 'Failed to update piece')
   }
   const result = await res.json()

@@ -52,7 +52,6 @@
         :items-length="totalItems"
         :loading="loading"
         :search="search"
-        @update:options="loadCollections"
         class="collection-table"
       >
         <!-- Image Column -->
@@ -208,6 +207,13 @@ const headers = [
   { title: 'Mô tả', key: 'description', sortable: false },
   { title: '', key: 'actions', sortable: false, width: '120px', align: 'end' as const },
 ]
+
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  loadCollections({ page: page.value, itemsPerPage: itemsPerPage.value })
+})
+
 
 // Debounce search
 let searchTimeout: ReturnType<typeof setTimeout>

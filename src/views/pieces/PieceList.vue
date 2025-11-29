@@ -53,7 +53,6 @@
         :items-length="totalItems"
         :loading="loading"
         :search="search"
-        @update:options="loadPieces"
         class="piece-table"
       >
         <!-- Images Column -->
@@ -213,6 +212,12 @@ function truncateHtml(html: string, maxLength: number): string {
   return text.substring(0, maxLength) + '...'
 }
 
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  loadPieces({ page: page.value, itemsPerPage: itemsPerPage.value })
+})
+
 // Debounce search
 let searchTimeout: ReturnType<typeof setTimeout>
 watch(search, () => {
@@ -237,6 +242,7 @@ async function loadPieces(options: { page: number; itemsPerPage: number; sortBy?
     pieces.value = result.data || []
     totalItems.value = result.total
   } catch (error) {
+    console.log(error)
     showSnackbar('Không thể tải danh sách mẫu gỗ', 'error')
   } finally {
     loading.value = false
@@ -244,9 +250,27 @@ async function loadPieces(options: { page: number; itemsPerPage: number; sortBy?
 }
 
 function openForm(piece?: WoodPiece) {
-  selectedPiece.value = piece || null
-  isEdit.value = !!piece
-  formDialog.value = true
+  const pathSegments = window.location.pathname.split('/');
+  const database_id = pathSegments[2] || '';
+
+  console.log(database_id)
+
+  if (piece) {
+    selectedPiece.value = piece;
+  } else {
+    selectedPiece.value = {
+      id: '',
+      database_id: database_id,
+      name: '',
+      description: '',
+      image_urls: [],
+    };
+  }
+
+  console.log(selectedPiece)
+
+  isEdit.value = !!piece;
+  formDialog.value = true;
 }
 
 async function handleSave(data: WoodPiece) {
