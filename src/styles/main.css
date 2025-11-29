@@ -88,3 +88,14 @@ html, body {
 .fade-leave-to {
   opacity: 0;
 }
+
+.tooltip-content {
+  background-color: #1a1a1a; /* primary đậm */
+  color: #ffffff;            /* on-primary */
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 1 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}

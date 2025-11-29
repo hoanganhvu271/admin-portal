@@ -93,8 +93,9 @@
         <!-- Actions Column -->
         <template #item.actions="{ item }">
           <div class="d-flex ga-1">
-            <v-tooltip text="Chỉnh sửa" location="top">
-              <template v-slot:activator="{ props }">
+            <!-- Chỉnh sửa -->
+            <v-tooltip location="top">
+              <template #activator="{ props }">
                 <v-btn
                   icon
                   variant="text"
@@ -105,10 +106,14 @@
                   <v-icon size="20">mdi-pencil-outline</v-icon>
                 </v-btn>
               </template>
+              <template #default>
+                <span class="tooltip-content">Chỉnh sửa</span>
+              </template>
             </v-tooltip>
 
-            <v-tooltip text="Xóa" location="top">
-              <template v-slot:activator="{ props }">
+            <!-- Xóa -->
+            <v-tooltip location="top">
+              <template #activator="{ props }">
                 <v-btn
                   icon
                   variant="text"
@@ -119,6 +124,9 @@
                 >
                   <v-icon size="20">mdi-delete-outline</v-icon>
                 </v-btn>
+              </template>
+              <template #default>
+                <span class="tooltip-content">Xóa</span>
               </template>
             </v-tooltip>
           </div>

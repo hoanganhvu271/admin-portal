@@ -71,7 +71,7 @@
 
         <!-- Size Column -->
         <template #item.size="{ item }">
-          <v-chip size="small" color="surface-variant" text-color="primary">
+          <v-chip size="small" color="primary" text-color="on-primary">
             {{ item.size }} mẫu
           </v-chip>
         </template>
@@ -86,8 +86,9 @@
         <!-- Actions Column -->
         <template #item.actions="{ item }">
           <div class="d-flex ga-1">
-            <v-tooltip text="Xem mẫu gỗ" location="top">
-              <template v-slot:activator="{ props }">
+            <!-- Xem mẫu gỗ -->
+            <v-tooltip location="top">
+              <template #activator="{ props }">
                 <v-btn
                   icon
                   variant="text"
@@ -98,10 +99,14 @@
                   <v-icon size="20">mdi-eye-outline</v-icon>
                 </v-btn>
               </template>
+              <template #default>
+                <span class="tooltip-content">Xem mẫu gỗ</span>
+              </template>
             </v-tooltip>
 
-            <v-tooltip text="Chỉnh sửa" location="top">
-              <template v-slot:activator="{ props }">
+            <!-- Chỉnh sửa -->
+            <v-tooltip location="top">
+              <template #activator="{ props }">
                 <v-btn
                   icon
                   variant="text"
@@ -112,10 +117,14 @@
                   <v-icon size="20">mdi-pencil-outline</v-icon>
                 </v-btn>
               </template>
+              <template #default>
+                <span class="tooltip-content">Chỉnh sửa</span>
+              </template>
             </v-tooltip>
 
-            <v-tooltip text="Xóa" location="top">
-              <template v-slot:activator="{ props }">
+            <!-- Xóa -->
+            <v-tooltip location="top">
+              <template #activator="{ props }">
                 <v-btn
                   icon
                   variant="text"
@@ -127,9 +136,13 @@
                   <v-icon size="20">mdi-delete-outline</v-icon>
                 </v-btn>
               </template>
+              <template #default>
+                <span class="tooltip-content">Xóa</span>
+              </template>
             </v-tooltip>
           </div>
         </template>
+
 
         <!-- No Data -->
         <template #no-data>
