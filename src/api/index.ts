@@ -1,8 +1,8 @@
 import { useAuth } from '@/stores/auth'
 
-// const API_BASE = 'https://api.yolowood.click'
+const API_BASE = 'https://api.yolowood.click'
 
-const API_BASE = 'http://localhost:8080'
+// const API_BASE = 'http://localhost:8080'
 // ==================== TYPES ====================
 
 export interface WoodDatabase {

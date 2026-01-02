@@ -1,5 +1,71 @@
-# Vue 3 + TypeScript + Vite
+# Wood Admin Portal
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Giao diện quản trị thư viện gỗ - xây dựng với Vue 3 + TypeScript + Vuetify.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Tech Stack
+
+- Vue 3 (Composition API)
+- TypeScript
+- Vuetify 3
+- Vue Router
+- Vite
+- Quill Editor
+
+## Cài đặt
+
+```bash
+# Cài dependencies
+npm install
+
+# Chạy development server
+npm run dev
+
+# Build production
+npm run build
+```
+
+## Cấu trúc thư mục
+
+```
+src/
+├── api/          # API calls
+├── components/   # Components dùng chung
+├── models/       # TypeScript interfaces
+├── plugins/      # Vuetify config
+├── router/       # Vue Router
+├── styles/       # CSS global
+└── views/        # Pages
+    ├── collections/  # Quản lý bộ sưu tập
+    └── pieces/       # Quản lý mẫu gỗ
+```
+
+## Tính năng
+
+- Quản lý bộ sưu tập gỗ (CRUD)
+- Quản lý mẫu gỗ trong từng bộ sưu tập
+- Upload hình ảnh lên Cloudinary
+- Rich text editor cho mô tả
+- Phân trang và tìm kiếm
+
+## Cấu hình
+
+API endpoint được cấu hình trong `src/api/index.ts`:
+
+```typescript
+const API_BASE = 'https://api.yolowood.click'
+```
+
+## Scripts
+
+| Lệnh | Mô tả |
+|------|-------|
+| `npm run dev` | Chạy dev server (port 3000) |
+| `npm run build` | Build production |
+| `npm run preview` | Preview bản build |
+
+## Docker
+
+```bash
+docker build -t wood-admin-portal .
+docker run -p 80:80 wood-admin-portal
+```
