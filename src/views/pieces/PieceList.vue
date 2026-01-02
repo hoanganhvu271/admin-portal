@@ -46,15 +46,15 @@
     <!-- Data Table -->
     <v-card v-else class="mt-6">
       <v-data-table-server
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        :headers="headers"
-        :items="pieces"
-        :items-length="totalItems"
-        :loading="loading"
-        :search="search"
-        class="piece-table"
-      >
+      v-model:page="page"
+      v-model:items-per-page="itemsPerPage"
+      :headers="headers"
+      :items="pieces"
+      :items-length="totalItems"
+      :loading="loading"
+      :search="search"
+      @update:options="loadPieces">
+
         <!-- Images Column -->
         <template #item.image_urls="{ item }">
           <div class="py-3 d-flex ga-2">

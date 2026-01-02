@@ -13,11 +13,11 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/library-api': {
-        target: 'http://localhost:8080',
+        target: 'http://103.70.115.91:8080',
         changeOrigin: true
       },
       '/model-api': {
-        target: 'http://localhost:8080',
+        target: 'http://103.70.115.91:8080',
         changeOrigin: true
       }
     }
