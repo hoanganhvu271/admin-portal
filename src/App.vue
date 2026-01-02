@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- App Bar -->
-    <v-app-bar elevation="0" color="white" border="b">
+    <v-app-bar v-if="isAuthenticated" elevation="0" color="white" border="b">
       <v-container class="d-flex align-center py-0" style="max-width: 1400px;">
         <router-link to="/" class="d-flex align-center text-decoration-none">
           <div class="app-logo mr-3">
@@ -22,27 +22,74 @@
             <v-icon size="small">mdi-chevron-right</v-icon>
           </template>
         </v-breadcrumbs>
+
+        <v-spacer />
+
+        <!-- User Menu -->
+        <v-menu offset-y>
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="text"
+              class="text-none"
+            >
+              <v-avatar size="32" color="primary" class="mr-2">
+                <v-icon size="20" color="white">mdi-account</v-icon>
+              </v-avatar>
+              <span class="d-none d-sm-inline">{{ userEmail }}</span>
+              <v-icon end>mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+
+          <v-list density="compact" min-width="200">
+            <v-list-item>
+              <v-list-item-title class="text-caption text-secondary">
+                Đăng nhập với
+              </v-list-item-title>
+              <v-list-item-subtitle class="font-weight-medium">
+                {{ userEmail }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-divider class="my-2" />
+
+            <v-list-item @click="handleSignOut" class="text-error">
+              <template v-slot:prepend>
+                <v-icon size="20">mdi-logout</v-icon>
+              </template>
+              <v-list-item-title>Đăng xuất</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-container>
     </v-app-bar>
 
     <!-- Main Content -->
-    <v-main class="bg-background">
-      <v-container style="max-width: 1400px;" class="py-8">
+    <v-main :class="{ 'bg-background': isAuthenticated }">
+      <v-container v-if="isAuthenticated" style="max-width: 1400px;" class="py-8">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
       </v-container>
+      
+      <!-- Login page doesn't need container -->
+      <router-view v-else />
     </v-main>
   </v-app>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
+const { user, isAuthenticated, signOut } = useAuth()
+
+const userEmail = computed(() => user.value?.email || '')
 
 const breadcrumbs = computed(() => {
   const items = [
@@ -59,6 +106,11 @@ const breadcrumbs = computed(() => {
 
   return items
 })
+
+async function handleSignOut() {
+  await signOut()
+  router.push('/login')
+}
 </script>
 
 <style scoped>

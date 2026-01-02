@@ -1,5 +1,8 @@
-const API_BASE = 'https://api.yolowood.click'
+import { useAuth } from '@/stores/auth'
 
+// const API_BASE = 'https://api.yolowood.click'
+
+const API_BASE = 'http://localhost:8080'
 // ==================== TYPES ====================
 
 export interface WoodDatabase {
@@ -33,6 +36,38 @@ export interface PaginationParams {
   desc?: boolean
 }
 
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { getIdToken } = useAuth()
+  const token = await getIdToken()
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  }
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  
+  return headers
+}
+
+async function apiFetch(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const authHeaders = await getAuthHeaders()
+
+  const headers: HeadersInit = {
+    ...authHeaders,
+    ...(options.headers || {})
+  }
+
+  return fetch(url, {
+    ...options,
+    headers
+  })
+}
+
 // ==================== WOOD DATABASE (Collections) ====================
 
 // Get all collections with pagination
@@ -45,21 +80,21 @@ export async function getCollections(params?: PaginationParams): Promise<Paginat
 
     console.log("Call api...")
 
-  const res = await fetch(`${API_BASE}/library-api/database/list?${searchParams}`)
+  const res = await apiFetch(`${API_BASE}/library-api/database/list?${searchParams}`)
   if (!res.ok) throw new Error('Failed to fetch collections')
   return res.json()
 }
 
 // Get single collection
 export async function getCollection(id: string): Promise<WoodDatabase> {
-  const res = await fetch(`${API_BASE}/library-api/database/get?id=${id}`)
+  const res = await apiFetch(`${API_BASE}/library-api/database/get?id=${id}`)
   if (!res.ok) throw new Error('Failed to fetch collection')
   return res.json()
 }
 
 // Create new collection
 export async function createCollection(data: WoodDatabase): Promise<WoodDatabase> {
-  const res = await fetch(`${API_BASE}/library-api/database/create`, {
+  const res = await apiFetch(`${API_BASE}/library-api/database/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -74,7 +109,7 @@ export async function createCollection(data: WoodDatabase): Promise<WoodDatabase
 
 // Update collection
 export async function updateCollection(id: string, data: WoodDatabase): Promise<WoodDatabase> {
-  const res = await fetch(`${API_BASE}/library-api/database/update/${id}`, {
+  const res = await apiFetch(`${API_BASE}/library-api/database/update/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -89,7 +124,7 @@ export async function updateCollection(id: string, data: WoodDatabase): Promise<
 
 // Delete collection
 export async function deleteCollection(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/library-api/database/delete?id=${id}`, {
+  const res = await apiFetch(`${API_BASE}/library-api/database/delete?id=${id}`, {
     method: 'DELETE'
   })
   if (!res.ok) {
@@ -112,14 +147,14 @@ export async function getPiecesByDatabase(
   if (params?.order_by) searchParams.set('order_by', params.order_by)
   if (params?.desc) searchParams.set('desc', 'true')
 
-  const res = await fetch(`${API_BASE}/library-api/piece/list?${searchParams}`)
+  const res = await apiFetch(`${API_BASE}/library-api/piece/list?${searchParams}`)
   if (!res.ok) throw new Error('Failed to fetch pieces')
   return res.json()
 }
 
 // Get single piece
 export async function getPiece(id: string): Promise<WoodPiece> {
-  const res = await fetch(`${API_BASE}/library-api/piece/get?id=${id}`)
+  const res = await apiFetch(`${API_BASE}/library-api/piece/get?id=${id}`)
   if (!res.ok) throw new Error('Failed to fetch piece')
   return res.json()
 }
@@ -127,7 +162,7 @@ export async function getPiece(id: string): Promise<WoodPiece> {
 // Create new piece
 export async function createPiece(data: WoodPiece): Promise<WoodPiece> {
     console.log(data)
-  const res = await fetch(`${API_BASE}/library-api/piece/create`, {
+  const res = await apiFetch(`${API_BASE}/library-api/piece/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -144,7 +179,7 @@ export async function createPiece(data: WoodPiece): Promise<WoodPiece> {
 // Update piece
 export async function updatePiece(id: string, data: WoodPiece): Promise<WoodPiece> {
     console.log(data)
-  const res = await fetch(`${API_BASE}/library-api/piece/update/${id}`, {
+  const res = await apiFetch(`${API_BASE}/library-api/piece/update/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -160,7 +195,7 @@ export async function updatePiece(id: string, data: WoodPiece): Promise<WoodPiec
 
 // Delete piece
 export async function deletePiece(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/library-api/piece/delete?id=${id}`, {
+  const res = await apiFetch(`${API_BASE}/library-api/piece/delete?id=${id}`, {
     method: 'DELETE'
   })
   if (!res.ok) {
@@ -175,7 +210,7 @@ export async function uploadImage(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch(`${API_BASE}/library-api/upload_image`, {
+  const res = await apiFetch(`${API_BASE}/library-api/upload_image`, {
     method: 'POST',
     body: formData
   })
